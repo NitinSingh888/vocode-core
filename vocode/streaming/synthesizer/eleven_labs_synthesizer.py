@@ -43,25 +43,27 @@ class ElevenLabsSynthesizer(BaseSynthesizer[ElevenLabsSynthesizerConfig]):
         self.words_per_minute = 150
         self.upsample = None
         self.sample_rate = self.synthesizer_config.sampling_rate
+        self.output_format = None
 
         if self.synthesizer_config.audio_encoding == AudioEncoding.LINEAR16:
-            match self.synthesizer_config.sampling_rate:
-                case SamplingRate.RATE_16000:
-                    self.output_format = "pcm_16000"
-                case SamplingRate.RATE_22050:
-                    self.output_format = "pcm_22050"
-                case SamplingRate.RATE_24000:
-                    self.output_format = "pcm_24000"
-                case SamplingRate.RATE_44100:
-                    self.output_format = "pcm_44100"
-                case SamplingRate.RATE_48000:
-                    self.output_format = "pcm_44100"
-                    self.upsample = SamplingRate.RATE_48000.value
-                    self.sample_rate = SamplingRate.RATE_44100.value
-                case _:
-                    raise ValueError(
-                        f"Unsupported sampling rate: {self.synthesizer_config.sampling_rate}. Elevenlabs only supports 16000, 22050, 24000, and 44100 Hz."
-                    )
+            if not synthesizer_config.ignore_usample_and_output_format:
+                match self.synthesizer_config.sampling_rate:
+                    case SamplingRate.RATE_16000:
+                        self.output_format = "pcm_16000"
+                    case SamplingRate.RATE_22050:
+                        self.output_format = "pcm_22050"
+                    case SamplingRate.RATE_24000:
+                        self.output_format = "pcm_24000"
+                    case SamplingRate.RATE_44100:
+                        self.output_format = "pcm_44100"
+                    case SamplingRate.RATE_48000:
+                        self.output_format = "pcm_44100"
+                        self.upsample = SamplingRate.RATE_48000.value
+                        self.sample_rate = SamplingRate.RATE_44100.value
+                    case _:
+                        raise ValueError(
+                            f"Unsupported sampling rate: {self.synthesizer_config.sampling_rate}. Elevenlabs only supports 16000, 22050, 24000, and 44100 Hz."
+                        )
         elif self.synthesizer_config.audio_encoding == AudioEncoding.MULAW:
             self.output_format = "ulaw_8000"
         else:
@@ -88,8 +90,10 @@ class ElevenLabsSynthesizer(BaseSynthesizer[ElevenLabsSynthesizerConfig]):
             voice = Voice(voice_id=self.voice_id)
         url = (
             ELEVEN_LABS_BASE_URL
-            + f"text-to-speech/{self.voice_id}/stream?output_format={self.output_format}"
+            + f"text-to-speech/{self.voice_id}/stream"
         )
+        if self.output_format:
+            url + url+"?output_format={self.output_format}"
         if self.optimize_streaming_latency:
             url += f"&optimize_streaming_latency={self.optimize_streaming_latency}"
         headers = {"xi-api-key": self.api_key}

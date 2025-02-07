@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 
 from fastapi import WebSocket
 
@@ -33,3 +34,6 @@ class WebsocketOutputDevice(RateLimitInterruptionsOutputDevice):
         if self.active:
             transcript_message = TranscriptMessage.from_event(event)
             await self.ws.send_text(transcript_message.json())
+    async def consume_interrupt(self, is_interrupt: bool):
+        if self.active:
+            await self.queue.put_nowait(json.dumps({"data": is_interrupt, "type": "interrupt"}))

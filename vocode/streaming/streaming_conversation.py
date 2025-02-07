@@ -281,6 +281,11 @@ class StreamingConversation(AudioPipeline[OutputDeviceType]):
                 self.conversation.is_human_still_there = True
 
             transcription.is_interrupt = self.conversation.current_transcription_is_interrupt
+            try:
+                await self.conversation.send_interrupt_message()
+            except Exception as e:
+                print("Exception occur while sending interrupt message")
+                print(e)
             self.conversation.is_human_speaking = not transcription.is_final
             if transcription.is_final:
                 self.has_associated_ignored_utterance = False
@@ -820,6 +825,9 @@ class StreamingConversation(AudioPipeline[OutputDeviceType]):
 
     def mark_last_action_timestamp(self):
         self.last_action_timestamp = time.time()
+
+    async def send_interrupt_message(self):
+        await self.output_device.consume_interrupt(True)
 
     async def broadcast_interrupt(self):
         """Stops all inflight events and cancels all workers that are sending output

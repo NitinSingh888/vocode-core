@@ -110,6 +110,7 @@ class ElevenLabsSynthesizerConfig(
     model_id: Optional[str]
     experimental_websocket: bool = False
     backchannel_amplitude_factor: float = 0.5
+    ignore_usample_and_output_format: bool = False
 
     @validator("voice_id")
     def set_name(cls, voice_id):
