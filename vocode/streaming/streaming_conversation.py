@@ -282,7 +282,8 @@ class StreamingConversation(AudioPipeline[OutputDeviceType]):
 
             transcription.is_interrupt = self.conversation.current_transcription_is_interrupt
             try:
-                await self.conversation.send_interrupt_message()
+                if transcription.is_interrupt or (transcription.is_final and transcription.message) or len(transcription.message) > 5:
+                    await self.conversation.send_interrupt_message()
             except Exception as e:
                 print("Exception occur while sending interrupt message")
                 print(e)

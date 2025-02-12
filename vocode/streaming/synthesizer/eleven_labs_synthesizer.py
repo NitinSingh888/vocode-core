@@ -64,6 +64,8 @@ class ElevenLabsSynthesizer(BaseSynthesizer[ElevenLabsSynthesizerConfig]):
                         raise ValueError(
                             f"Unsupported sampling rate: {self.synthesizer_config.sampling_rate}. Elevenlabs only supports 16000, 22050, 24000, and 44100 Hz."
                         )
+            else:
+                self.output_format = 'wav'
         elif self.synthesizer_config.audio_encoding == AudioEncoding.MULAW:
             self.output_format = "ulaw_8000"
         else:

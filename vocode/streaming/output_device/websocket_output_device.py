@@ -36,4 +36,4 @@ class WebsocketOutputDevice(RateLimitInterruptionsOutputDevice):
             await self.ws.send_text(transcript_message.json())
     async def consume_interrupt(self, is_interrupt: bool):
         if self.active:
-            await self.queue.put_nowait(json.dumps({"data": is_interrupt, "type": "interrupt"}))
+            await self.ws.send_text(json.dumps({"data": is_interrupt, "type": "interrupt"}))
