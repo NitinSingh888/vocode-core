@@ -14,7 +14,7 @@ from vocode.streaming.output_device.rate_limit_interruptions_output_device impor
 
 
 class WebsocketOutputDevice(RateLimitInterruptionsOutputDevice):
-    def __init__(self, ws: WebSocket, sampling_rate: int, audio_encoding: AudioEncoding):
+    def __init__(self, ws, sampling_rate: int, audio_encoding: AudioEncoding):
         super().__init__(sampling_rate, audio_encoding)
         self.ws = ws
         self.active = False
@@ -28,12 +28,24 @@ class WebsocketOutputDevice(RateLimitInterruptionsOutputDevice):
         self.active = False
 
     async def play(self, chunk: bytes):
-        await self.ws.send_text(AudioMessage.from_bytes(chunk).json())
+        message = AudioMessage.from_bytes(chunk).json()
+        if isinstance(self.ws, WebSocket):
+            await self.ws.send_text(AudioMessage.from_bytes(chunk).json())
+        else:
+            await self.ws.emit('audio', json.loads(message))
 
     async def send_transcript(self, event: TranscriptEvent):
         if self.active:
-            transcript_message = TranscriptMessage.from_event(event)
-            await self.ws.send_text(transcript_message.json())
+            transcript_message = TranscriptMessage.from_event(event).json()
+            if isinstance(self.ws, WebSocket):
+                await self.ws.send_text(transcript_message)
+            else:
+                await self.ws.emit('transcript', json.loads(transcript_message))
+
     async def consume_interrupt(self, is_interrupt: bool):
         if self.active:
-            await self.ws.send_text(json.dumps({"data": is_interrupt, "type": "interrupt"}))
+            interrupt_message = json.dumps({"data": is_interrupt, "type": "interrupt"})
+            if isinstance(self.ws, WebSocket):
+                await self.ws.send_text(interrupt_message)
+            else:
+                await self.ws.emit('interrupt', interrupt_message)
